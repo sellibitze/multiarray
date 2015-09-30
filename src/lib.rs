@@ -338,6 +338,24 @@ pub type Array5D<T> = MultiArray<T, Dim5>;
 pub type Array6D<T> = MultiArray<T, Dim6>;
 
 
+impl<'a, T, A: LayoutHelper> From<&'a MultiArray<T, A>> for MultiArrayRef<'a, T, A> {
+    fn from(ma: &'a MultiArray<T, A>) -> Self {
+        ma.borrow()
+    }
+}
+
+impl<'a, T, A: LayoutHelper> From<&'a mut MultiArray<T, A>> for MultiArrayRef<'a, T, A> {
+    fn from(ma: &'a mut MultiArray<T, A>) -> Self {
+        ma.borrow()
+    }
+}
+
+impl<'a, T, A: LayoutHelper> From<&'a mut MultiArray<T, A>> for MultiArrayRefMut<'a, T, A> {
+    fn from(ma: &'a mut MultiArray<T, A>) -> Self {
+        ma.borrow_mut()
+    }
+}
+
 impl<'a, T> From<&'a [T]> for MultiArrayRef<'a, T, Dim1> {
     fn from(slice: &'a [T]) -> Self {
         MultiArrayRef {
