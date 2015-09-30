@@ -265,13 +265,18 @@ impl<A> MultiArrayLayout<A> where A: LayoutHelperExt {
 
 
 /// Shared view of a multi-dimensional array
-#[allow(raw_pointer_derive)]
-#[derive(Copy, Clone)]
 pub struct MultiArrayRef<'a, T: 'a, A> where A: LayoutHelper {
     layout: MultiArrayLayout<A>,
     data: *const T,
     _m: PhantomData<&'a [T]>,
 }
+
+impl<'a, T: 'a, A> Copy for MultiArrayRef<'a, T, A> where A: LayoutHelper {}
+
+impl<'a, T: 'a, A> Clone for MultiArrayRef<'a, T, A> where A: LayoutHelper {
+    fn clone(&self) -> Self { *self }
+}
+
 
 /// Mutable view of a multi-dimensional array
 pub struct MultiArrayRefMut<'a, T: 'a, A> where A: LayoutHelper {
