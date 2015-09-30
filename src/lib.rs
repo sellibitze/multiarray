@@ -181,12 +181,14 @@ impl<A> MultiArrayLayout<A> where A: LayoutHelper {
     fn subsampled_dim(&self, d: usize, factor: usize) -> Self {
         let dims = A::dimensions();
         assert!(d < dims);
+        if factor == 1 { return *self; }
+        assert!(factor > 1);
         let mut ex2 = self.extents;
         let mut st2 = self.steps;
         {
             let xref = &mut ex2.as_mut()[d];
             let full = *xref;
-            *xref = full / factor;
+            *xref = (full + (factor - 1)) / factor;
         }
         {
             let sref = &mut st2.as_mut()[d];
