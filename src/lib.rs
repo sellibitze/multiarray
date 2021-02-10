@@ -40,7 +40,7 @@ use std::ops::{ Index, IndexMut };
 
 /// Helper type to wrap things. This helps avoiding trait coherency issues
 /// w.r.t. `AsRef` and `From`.
-#[derive(Copy,Clone)]
+#[derive(Copy,Clone,PartialEq,Eq)]
 pub struct Wrapped<T>(pub T);
 
 impl<T> From<T> for Wrapped<[T; 1]> {
@@ -65,10 +65,10 @@ impl<B: ?Sized, O: AsMut<B>> AsMut<B> for Wrapped<O> {
 /// memory layout of a multi-dimensional array.
 pub unsafe trait LayoutHelper {
     /// type for a small fixed-size array of isize
-    type I: AsRef<[isize]> + AsMut<[isize]> + Copy + Clone;
+    type I: AsRef<[isize]> + AsMut<[isize]> + Copy + Clone + PartialEq + Eq;
 
     /// type for a small fixed-size array of usize
-    type U: AsRef<[usize]> + AsMut<[usize]> + Copy + Clone;
+    type U: AsRef<[usize]> + AsMut<[usize]> + Copy + Clone + PartialEq + Eq;
 
     /// length of the fixed-size arrays this type can create
     fn dimensions() -> usize;
@@ -114,6 +114,7 @@ declare_int_array_maker! { Dim4, 4, [0,0,0,0], Dim3 }
 declare_int_array_maker! { Dim5, 5, [0,0,0,0,0], Dim4 }
 declare_int_array_maker! { Dim6, 6, [0,0,0,0,0,0], Dim5 }
 
+#[derive(Eq)]
 struct MultiArrayLayout<A> where A: LayoutHelper {
     extents: A::U,
     steps: A::I,
@@ -124,6 +125,12 @@ impl<A> Copy for MultiArrayLayout<A> where A: LayoutHelper {}
 impl<A> Clone for MultiArrayLayout<A> where A: LayoutHelper {
     fn clone(&self) -> Self {
         MultiArrayLayout { extents: self.extents, steps: self.steps }
+    }
+}
+
+impl<A> PartialEq for MultiArrayLayout<A> where A: LayoutHelper {
+    fn eq(&self, other: &Self) -> bool {
+        self.extents.eq(&other.extents) && self.steps.eq(&other.steps)
     }
 }
 
@@ -300,9 +307,16 @@ pub struct MultiArrayRefMut<'a, T: 'a, A> where A: LayoutHelper {
 /// matrix[[1,0]] = 3; matrix[[1,1]] = 4;
 /// matrix[[2,0]] = 5; matrix[[2,1]] = 6;
 /// ```
+#[derive(Eq)]
 pub struct MultiArray<T, A> where A: LayoutHelper {
     layout: MultiArrayLayout<A>,
     data: Box<[T]>,
+}
+
+impl <T, A> PartialEq for MultiArray<T, A> where T: PartialEq, A: LayoutHelper {
+    fn eq(&self, other: &Self) -> bool {
+        self.layout.eq(&other.layout) && self.data.eq(&other.data)
+    }
 }
 
 /// Shared view of a 1D array
